@@ -7,7 +7,7 @@ while ensuring chunks are appropriately sized for embedding and retrieval.
 
 import re
 from dataclasses import dataclass
-from typing import Iterator
+from typing import Iterator, Optional
 import frontmatter
 import tiktoken
 
@@ -16,20 +16,20 @@ class Chunk:
     content: str
     metadata: dict
     chunk_index: int
-    taken_count: int
-    section: str | None = None
+    token_count: int
+    section: Optional[str] = None
 
 class IncidentChunker:
     def __init__(
             self,
-            max_token: int = 512,
+            max_tokens: int = 512,
             overlap_tokens: int = 50,
-            model: str = "gpt-3.5-turbo"  # For tiktok en encoding
+            model: str = "gpt-3.5-turbo"  # For tiktoken encoding
         ):
 
-        self.max_tokens = max_token
-        self.overlap_token = overlap_tokens
-        self.encoder = tiktoken.encoding_for_model
+        self.max_tokens = max_tokens
+        self.overlap_tokens = overlap_tokens
+        self.encoder = tiktoken.encoding_for_model(model)
 
     def count_tokens(self, text: str) -> int:
         return len(self.encoder.encode(text))
@@ -37,11 +37,11 @@ class IncidentChunker:
     def parse_document(self, content: str, filename: str) -> tuple[dict, str]:
         post = frontmatter.loads(content)
         metadata = dict(post.metadata)
-        metadata['source_files'] = filename
+        metadata['source_file'] = filename
 
         return metadata, post.content
     
-    def extract_sections(self, content: str) -> list[tuple[str | None, str]]:
+    def extract_sections(self, content: str) -> list[tuple[Optional[str], str]]:
         pattern = r'^## (.+)$'
 
         sections = []
@@ -133,7 +133,7 @@ class IncidentChunker:
         summary = self.create_summary_chunk(metadata)
 
         if summary:
-            chunks.append(chunk(
+            chunks.append(Chunk(
                 content=summary,
                 metadata=metadata,
                 chunk_index=chunk_index,
@@ -173,23 +173,23 @@ class IncidentChunker:
 
             return chunks
         
-    def create_summary_chunk(self, metadata:dict) -> str | None:
+    def create_summary_chunk(self, metadata: dict) -> Optional[str]:
         parts = []
 
         if 'title' in metadata:
-            parts.append(f'Incidents: {metadata['title']}')
+            parts.append(f"Incidents: {metadata['title']}")
 
         if 'incident_id' in metadata:
-            parts.append(f'ID: {metadata['incident_id']}')
+            parts.append(f"ID: {metadata['incident_id']}")
 
         if 'severity' in metadata:
-            parts.append(f'severity: {metadata['severity']}')
+            parts.append(f"Severity: {metadata['severity']}")
 
         if 'date' in metadata:
-            parts.append(f'Date: {metadata['date']}')
+            parts.append(f"Date: {metadata['date']}")
 
         if 'duration_minutes' in metadata:
-            parts.append(f'Duration: {metadata['duration_minutes']} minutes')
+            parts.append(f"Duration: {metadata['duration_minutes']} minutes")
 
         if 'services_affected' in metadata:
             services = metadata['services_affected']
@@ -200,6 +200,6 @@ class IncidentChunker:
             parts.append(f'Services affected: {services}')
 
         if 'root_cause' in metadata:
-            parts.append(f'Root cause: {metadata['root_cause']}')
+            parts.append(f"Root cause: {metadata['root_cause']}")
 
         return 'n'.join(parts) if parts else None

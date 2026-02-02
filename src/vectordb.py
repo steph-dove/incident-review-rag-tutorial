@@ -6,8 +6,9 @@ incident review embeddings.
 """
 
 import json
+from datetime import date, datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 import chromadb
 from chromadb.config import Settings
 
@@ -73,6 +74,8 @@ class IncidentVectorDB:
             for key, value in meta.items():
                 if isinstance(value, (list, dict)):
                     clean_meta[key] = json.dumps(value)
+                elif isinstance(value, (date, datetime)):
+                    clean_meta[key] = value.isoformat()
                 else:
                     clean_meta[key] = value
             clean_metadatas.append(clean_meta)
@@ -87,9 +90,9 @@ class IncidentVectorDB:
     def query(
             self,
             query_embedding: list[float],
-            n_results: int=5,
-            where: dict | None = None,
-            where_document: dict | None = None
+            n_results: int = 5,
+            where: Optional[dict] = None,
+            where_document: Optional[dict] = None
     ) -> dict:
         """
         Query the vector database for similar cunks
@@ -103,7 +106,7 @@ class IncidentVectorDB:
         """
 
         results = self.collection.query(
-            query_embedding=[query_embedding],
+            query_embeddings=[query_embedding],
             n_results=n_results,
             where=where,
             where_document=where_document,
@@ -149,13 +152,13 @@ def format_search_results(results: dict) -> list[dict]:
     # We only have one query, so take the first element
     ids = results.get("ids", [[]])[0]
     documents = results.get("documents", [[]])[0]
-    metadatas = results.get("metadata", [[]])[0]
-    distance = results.get("distance", [[]])[0]
+    metadatas = results.get("metadatas", [[]])[0]
+    distances = results.get("distances", [[]])[0]
 
     for i in range(len(ids)):
         # Convert cosine distances to similarity
         # ChromaDB returns L2 distance for cosine, so similarity = 1 - distance
-        similarity = 1 - distance[i] if distance else None
+        similarity = 1 - distances[i] if distances else None
 
         formatted.append({
             "id": ids[i],

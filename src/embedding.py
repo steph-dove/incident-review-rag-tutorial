@@ -24,7 +24,7 @@ class EmbeddingGenerator:
     def __init__(self, model_name: str="all-MiniLM-L6-v2"):
         self.model_name = model_name
         self.model = SentenceTransformer(model_name)
-        self.embedding_dim = self.model.get_sentence_embedding_dimensions()
+        self.embedding_dim = self.model.get_sentence_embedding_dimension()
 
 
     def embed_texts(
@@ -44,12 +44,12 @@ class EmbeddingGenerator:
         :return: numpy array of shape (len(texts), embedding_dim)
         """
 
-        embeddings = self.model_encode(
-            texts, 
+        embeddings = self.model.encode(
+            texts,
             batch_size=batch_size,
             show_progress_bar=show_progress,
             convert_to_numpy=True,
-            normalize_embaddings=True # Important for cosine similarity
+            normalize_embeddings=True  # Important for cosine similarity
         )
 
         return embeddings
@@ -88,9 +88,9 @@ class EmbeddingGenerator:
 
         similarities = np.dot(document_embeddings, query_embedding)
         return similarities
-    
 
-    # Utility Function for quick embedding generation
-    def create_embedder(model_name: str = 'all-MiniLM-L6-v2') -> EmbeddingGenerator:
-        """Factory function for creating embedding generators"""
-        return EmbeddingGenerator(model_name)
+
+# Utility function for quick embedding generation
+def create_embedder(model_name: str = 'all-MiniLM-L6-v2') -> EmbeddingGenerator:
+    """Factory function for creating embedding generators"""
+    return EmbeddingGenerator(model_name)
