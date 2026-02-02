@@ -2,6 +2,8 @@
 
 A RAG (Retrieval-Augmented Generation) system for querying incident review documents, built with Metaflow and ChromaDB.
 
+[Notion Doc Tutorial Walkthrough](https://www.notion.so/Tutorial-Building-a-RAG-System-for-Incident-Reviews-with-Metaflow-2f78c30dc8ad80c29885fbf374e43895#2f78c30dc8ad809f9992cdf2437dab1f)
+
 ## Setup
 
 ```bash
