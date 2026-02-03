@@ -145,14 +145,14 @@ class IncidentChunker:
             for section_name, section_content in sections:
                 sections_content = section_content.strip()
 
-                if not section_content:
+                if not sections_content:
                     continue
 
-                section_tokens = self.count_tokens(section_content)
+                section_tokens = self.count_tokens(sections_content)
 
                 if section_tokens <= self.max_tokens:
                     chunks.append(Chunk(
-                        content=section_content,
+                        content=sections_content,
                         metadata=metadata,
                         chunk_index=chunk_index,
                         token_count=section_tokens,
@@ -161,7 +161,7 @@ class IncidentChunker:
                     chunk_index += 1
                 else:
                     # need to split section
-                    for chunk_content in self.split_long_section(section_content):
+                    for chunk_content in self.split_long_section(sections_content):
                         chunks.append(Chunk(
                             content=chunk_content,
                             metadata=metadata,

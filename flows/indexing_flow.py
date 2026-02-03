@@ -103,16 +103,25 @@ class IncidentIndexingFlow(FlowSpec):
         chunker = IncidentChunker(max_tokens=self.max_chunk_tokens)
 
         all_chunks = []
+        failed_docs = []
         for doc_path in self.document_paths:
             print(f"Chunking: {doc_path}")
 
-            with open(doc_path, 'r') as f:
-                content = f.read()
+            try:
+                with open(doc_path, 'r') as f:
+                    content = f.read()
 
-            chunks = chunker.chunk_document(content, doc_path)
-            all_chunks.extend(chunks)
+                chunks = chunker.chunk_document(content, doc_path)
+                all_chunks.extend(chunks)
 
-            print(f"  Created {len(chunks)} chunks")
+                print(f"  Created {len(chunks)} chunks")
+            except Exception as e:
+                failed_docs.append((doc_path, str(e)))
+                print(f"Warning: Failed to process {doc_path}: {e}")
+            
+        if failed_docs:
+            print(f"Failed to process {len(failed_docs)} documents")
+            self.failed_documents = failed_docs
 
         # Convert to serializable format
         self.chunks = [
@@ -159,6 +168,7 @@ class IncidentIndexingFlow(FlowSpec):
         self.embedding_dim = embedder.embedding_dim
 
         print(f"Generated {len(self.embeddings)} embeddings of dimension {self.embedding_dim}")
+        current.card.append(f"Embedded {len(self.chunks)} chunks in {self.embedding_time:.1f}s")
 
         self.next(self.store_in_vectordb)
 
